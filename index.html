@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hmm - AI 답변 검증 넛지 프로토타입</title>
+    <link rel="stylesheet" href="./styles.css?v=20260515-clean" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="demo-stage" aria-label="프로토타입 데모">
+        <header class="topbar">
+          <div class="brand-block">
+            <p class="eyebrow">Chrome Extension Prototype</p>
+            <h1>Hmm</h1>
+            <div class="pet-status" aria-label="펫 상태">
+              <p class="section-label">펫 상태</p>
+              <strong id="petMoodText">조용히 대기 중</strong>
+              <p id="petHint">답변을 선택하고 Ctrl+C를 누르면 말을 겁니다.</p>
+            </div>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-actions" aria-label="시연 버튼">
+              <button id="copyTrigger" class="primary-action" type="button">
+                AI 답변 복사 시뮬레이션
+              </button>
+              <button id="resetDemo" class="ghost-action" type="button">처음 상태로</button>
+            </div>
+            <div class="metrics-block">
+              <div class="segmented" role="group" aria-label="넛지 강도 선택">
+                <button class="level-button active" data-level="1" type="button">LV1</button>
+                <button class="level-button" data-level="2" type="button">LV2</button>
+                <button class="level-button" data-level="3" type="button">LV3</button>
+              </div>
+              <div class="stats" aria-label="오늘 사용 통계">
+                <div>
+                  <span id="interventionCount">0</span>
+                  <small>개입</small>
+                </div>
+                <div>
+                  <span id="checkedCount">0</span>
+                  <small>확인</small>
+                </div>
+                <div>
+                  <span id="ignoredCount">0</span>
+                  <small>무시</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="workspace">
+          <section class="browser-window" aria-label="가상 ChatGPT 화면">
+            <div class="browser-chrome">
+              <div class="window-dots" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <div class="address-bar">chatgpt.com</div>
+            </div>
+
+            <div class="chat-page">
+              <article class="answer-card">
+                <div class="assistant-label">ChatGPT</div>
+                <h2>생성형 AI가 대학 과제에 미치는 영향</h2>
+                <p>
+                  생성형 AI는 학생들이 자료를 더 빠르게 정리하고 초안을 작성하도록
+                  돕는다. 따라서 대학 과제에서 AI 활용은 학습 효율을 높이는 긍정적
+                  변화라고 볼 수 있다.
+                </p>
+                <p>
+                  앞으로 대학은 AI 사용을 금지하기보다 활용 능력을 평가 기준에
+                  포함해야 하며, 학생들은 AI 답변을 참고해 더 나은 결과물을 만들 수
+                  있다.
+                </p>
+                <button id="inlineCopy" class="copy-button" type="button">복사</button>
+              </article>
+
+              <div class="input-row">
+                <span>메시지 입력</span>
+                <button type="button" aria-label="전송">↗</button>
+              </div>
+            </div>
+
+            <div id="delayOverlay" class="delay-overlay" aria-live="polite">
+              <div>
+                <strong>잠깐, 반대 관점이 있어요</strong>
+                <span>흐름을 0.5초만 멈춰볼게요.</span>
+              </div>
+            </div>
+
+            <div id="countdownOverlay" class="countdown-overlay" aria-live="polite">
+              <div class="countdown-card">
+                <strong>이 내용을 붙여넣었어요.</strong>
+                <p>근거 확인하는 데 3초면 돼요.</p>
+                <span id="countdownNumber">3</span>
+              </div>
+            </div>
+
+            <div id="nudgeBubble" class="nudge-bubble" role="dialog" aria-live="polite">
+              <p>잠깐, 이거 맞아요?</p>
+              <div class="nudge-actions">
+                <button id="inspectButton" type="button">확인해볼게요</button>
+                <button id="ignoreButton" type="button">그냥 할게요</button>
+              </div>
+            </div>
+
+            <button id="pet" class="pet pet-idle" type="button" aria-label="Hmm 펫">
+              <span class="pet-face">
+                <span class="eye left-eye"></span>
+                <span class="eye right-eye"></span>
+                <span class="mouth"></span>
+              </span>
+              <span class="pet-name">Hmm</span>
+            </button>
+          </section>
+
+          <aside id="insightPanel" class="insight-panel" aria-label="검증 사이드 패널">
+            <div class="insight-header">
+              <div>
+                <h2>시선 더하기</h2>
+              </div>
+              <button id="closePanel" type="button" aria-label="패널 닫기">×</button>
+            </div>
+
+            <div class="insight-card">
+              <span class="tag">반대 관점</span>
+              <p>
+                AI 활용이 효율을 높일 수 있지만, 답변을 그대로 받아들이면 학생의
+                판단 과정이 생략될 수 있습니다.
+              </p>
+            </div>
+
+            <div class="insight-card">
+              <span class="tag">누락된 맥락</span>
+              <p>
+                과제 평가 기준, 출처 검증 방식, AI 사용 공개 여부에 대한 논의가
+                빠져 있습니다.
+              </p>
+            </div>
+
+            <div class="question-box">
+              <span class="tag">스스로 물어볼 질문</span>
+              <ul>
+                <li>이 주장의 근거는 어디에서 왔나요?</li>
+                <li>반대 사례나 부작용은 없나요?</li>
+                <li>내 과제에 그대로 써도 되는 문장인가요?</li>
+              </ul>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
