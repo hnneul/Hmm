@@ -18,23 +18,24 @@ Hmm은 AI가 판단을 대신하는 서비스가 아니라, 사용자가 스스�
 React + Vite 프로젝트입니다.
 
 ```bash
-cd prototype
 npm install
 npm run dev
 ```
 
-브라우저에서 터미널에 표시되는 로컬 주소를 열면 됩니다. 기본 주소는 `http://localhost:5173`입니다.
+저장소 폴더에서 위 명령어를 실행한 뒤, 브라우저에서 터미널에 표시되는 로컬 주소를 열면 됩니다.
+기본 주소는 `http://localhost:5173`입니다.
 
 ## 파일 구조
 
 ```text
-prototype/
+.
 ├── src/
 │   ├── App.jsx
 │   ├── main.jsx
 │   └── styles.css
 ├── index.html
 ├── package.json
+├── package-lock.json
 └── README.md
 ```
 
