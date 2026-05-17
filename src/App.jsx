@@ -107,7 +107,7 @@ const initialScenarios = {
 const scenarioOrder = ["copy", "summary", "report"];
 const COPY_NUDGE_THRESHOLD = 3;
 const SESSION_MINUTES_THRESHOLD = 50;
-const SESSION_MILLISECONDS_PER_DISPLAY_MINUTE = 10000;
+const SESSION_MILLISECONDS_PER_DISPLAY_MINUTE = 1000;
 
 function getMoodStage(rate) {
   if (rate > 90) return 1;
@@ -344,7 +344,7 @@ export default function App() {
         <div className="brand-block">
           <p className="eyebrow">Chrome Extension Prototype</p>
           <h1>Hmm</h1>
-          <p>AI가 답을 주는 게 아니라, 사용자가 다시 생각하게 만드는 실시간 AI 리터러시 안내자.</p>
+          <p>AI가 답을 주는 게 아니라, 다시 생각하게 만드는 리터러시 안내자</p>
         </div>
 
         <div className="status-strip" aria-label="오늘 사용 요약">
