@@ -244,7 +244,8 @@ h1, h2, h3, p { margin-top: 0; }
 }
 
 .prompt-card,
-.answer-card {
+.answer-card,
+.assignment-editor {
   border: 2px solid var(--ink);
   box-shadow: var(--shadow);
   padding: 18px;
@@ -260,6 +261,32 @@ h1, h2, h3, p { margin-top: 0; }
   width: min(680px, 92%);
   background: var(--surface);
   border-left: 6px solid var(--blue);
+}
+
+.assignment-editor {
+  width: min(680px, 92%);
+  background: #f8fafc;
+  border-left: 6px solid var(--pink);
+}
+
+.assignment-editor textarea {
+  display: block;
+  width: 100%;
+  min-height: 104px;
+  margin-top: 10px;
+  resize: vertical;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 12px;
+}
+
+.assignment-editor textarea:focus {
+  border-color: var(--blue);
+  outline: 0;
 }
 
 .prompt-card p,
@@ -564,6 +591,50 @@ h1, h2, h3, p { margin-top: 0; }
   color: var(--blue);
   font-size: 26px;
   font-weight: 950;
+}
+
+.detection-panel {
+  border-bottom: 2px solid var(--line);
+  padding: 14px 18px;
+}
+
+.detection-panel > span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detection-panel dl {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+}
+
+.detection-panel div {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.detection-panel dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.detection-panel dd {
+  margin: 0;
+  color: var(--soft-ink);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.detection-panel.ready {
+  background: rgba(255, 107, 138, 0.1);
 }
 
 .stage-scale {

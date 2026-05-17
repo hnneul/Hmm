@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import stage1Joy from "./assets/characters/clean/stage-1-joy.png";
 import stage2Happy from "./assets/characters/clean/stage-2-happy.png";
 import stage3Default from "./assets/characters/clean/stage-3-default.png";
@@ -43,7 +43,7 @@ const initialScenarios = {
     label: "연속 복붙 감지",
     address: "chatgpt.com",
     totalUses: 5,
-    copyCount: 3,
+    copyCount: 0,
     acceptRate: 62,
     panelTitle: "비판적 탐색",
     prompt: "생성형 AI가 대학 과제에 미치는 영향을 레포트 문장으로 정리해줘.",
@@ -105,6 +105,9 @@ const initialScenarios = {
 };
 
 const scenarioOrder = ["copy", "summary", "report"];
+const COPY_NUDGE_THRESHOLD = 3;
+const SESSION_MINUTES_THRESHOLD = 50;
+const SESSION_MILLISECONDS_PER_DISPLAY_MINUTE = 10000;
 
 function getMoodStage(rate) {
   if (rate > 90) return 1;
@@ -112,6 +115,18 @@ function getMoodStage(rate) {
   if (rate > 40) return 3;
   if (rate > 20) return 4;
   return 5;
+}
+
+function getClosestFromEvent(event, selector) {
+  const targetElement =
+    event.target?.nodeType === Node.ELEMENT_NODE ? event.target : event.target?.parentElement;
+  const targetMatch = targetElement?.closest(selector);
+  if (targetMatch) return targetMatch;
+
+  const anchorNode = window.getSelection?.().anchorNode;
+  const anchorElement =
+    anchorNode?.nodeType === Node.ELEMENT_NODE ? anchorNode : anchorNode?.parentElement;
+  return anchorElement?.closest(selector);
 }
 
 function CopyTrail({ count }) {
@@ -197,9 +212,100 @@ export default function App() {
   const [scenarios, setScenarios] = useState(initialScenarios);
   const [activeKey, setActiveKey] = useState("copy");
   const [popupVisible, setPopupVisible] = useState(false);
+  const [sessionMinutes, setSessionMinutes] = useState(0);
+  const [lastCopySource, setLastCopySource] = useState("대기 중");
+  const [detectedAt, setDetectedAt] = useState(null);
+  const sessionStartedAtRef = useRef(Date.now());
+  const lastAnswerCopyRef = useRef(null);
+  const autoNudgedRef = useRef(false);
   const scenario = scenarios[activeKey];
   const stage = useMemo(() => getMoodStage(scenario.acceptRate), [scenario.acceptRate]);
   const character = characterStages[stage];
+  const copyTriggerReady =
+    activeKey === "copy" &&
+    scenario.copyCount >= COPY_NUDGE_THRESHOLD &&
+    sessionMinutes >= SESSION_MINUTES_THRESHOLD;
+  const copyPopupTitle =
+    activeKey === "copy"
+      ? `지금까지 AI 답변을 ${scenario.copyCount}번 그대로 붙여넣었어요.`
+      : scenario.popupTitle;
+  const copyPopupBody =
+    activeKey === "copy"
+      ? `${sessionMinutes}분째 같은 AI 세션을 사용 중이에요. 비슷한 관점의 정보만 반복될 수 있으니 다른 관점도 한 번 확인해볼까요?`
+      : scenario.popupBody;
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => {
+      const elapsedMinutes = Math.floor(
+        (Date.now() - sessionStartedAtRef.current) / SESSION_MILLISECONDS_PER_DISPLAY_MINUTE
+      );
+      setSessionMinutes(elapsedMinutes);
+    }, 1000);
+
+    return () => window.clearInterval(timerId);
+  }, []);
+
+  useEffect(() => {
+    if (activeKey !== "copy" || !copyTriggerReady || autoNudgedRef.current) return;
+
+    autoNudgedRef.current = true;
+    setDetectedAt(new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }));
+    setPopupVisible(true);
+  }, [activeKey, copyTriggerReady]);
+
+  useEffect(() => {
+    if (activeKey !== "copy") return;
+
+    const handleCopy = (event) => {
+      const answerCard = getClosestFromEvent(event, ".answer-card");
+      if (!answerCard) return;
+
+      const copiedText = window.getSelection?.().toString().trim() || scenario.body;
+      if (!copiedText) return;
+
+      lastAnswerCopyRef.current = {
+        text: copiedText,
+        copiedAt: Date.now(),
+      };
+      setLastCopySource("AI 답변 복사됨");
+    };
+
+    const handlePaste = (event) => {
+      const pasteTarget = getClosestFromEvent(event, "[data-assignment-editor='true']");
+      const latestCopy = lastAnswerCopyRef.current;
+      if (!pasteTarget || !latestCopy) return;
+
+      const pastedText = event.clipboardData?.getData("text")?.trim() || "";
+      const copiedRecently = Date.now() - latestCopy.copiedAt < 2 * 60 * 1000;
+      const copiedAnswerPasted =
+        copiedRecently &&
+        (!pastedText ||
+          latestCopy.text.includes(pastedText.slice(0, 80)) ||
+          pastedText.includes(latestCopy.text.slice(0, 80)));
+
+      if (!copiedAnswerPasted) return;
+
+      setScenarios((current) => ({
+        ...current,
+        copy: {
+          ...current.copy,
+          totalUses: current.copy.totalUses + 1,
+          copyCount: Math.min(current.copy.copyCount + 1, 5),
+          acceptRate: Math.max(current.copy.acceptRate - 10, 8),
+        },
+      }));
+      setDetectedAt(new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }));
+      setLastCopySource("과제 입력창 붙여넣기 감지");
+    };
+
+    document.addEventListener("copy", handleCopy);
+    document.addEventListener("paste", handlePaste);
+
+    return () => {
+      document.removeEventListener("copy", handleCopy);
+      document.removeEventListener("paste", handlePaste);
+    };
+  }, [activeKey, scenario.body]);
 
   const updateActiveScenario = (updater) => {
     setScenarios((current) => ({
@@ -210,6 +316,7 @@ export default function App() {
   };
 
   const handleAccept = () => {
+    autoNudgedRef.current = false;
     updateActiveScenario((current) => ({
       ...current,
       acceptRate: Math.min(current.acceptRate + 8, 98),
@@ -218,6 +325,7 @@ export default function App() {
   };
 
   const handleDismiss = () => {
+    autoNudgedRef.current = false;
     updateActiveScenario((current) => ({
       ...current,
       acceptRate: Math.max(current.acceptRate - 16, 8),
@@ -302,6 +410,17 @@ export default function App() {
               <CopyTrail count={scenario.copyCount} />
             </article>
 
+            {activeKey === "copy" && (
+              <section className="assignment-editor" aria-label="과제 작성 입력창">
+                <span className="role-label">과제 작성창</span>
+                <textarea
+                  data-assignment-editor="true"
+                  aria-label="AI 답변을 붙여넣어 복붙 감지를 테스트하는 과제 작성창"
+                  placeholder="AI 답변 문장을 복사한 뒤 이곳에 붙여넣으면 복붙 감지가 누적됩니다."
+                />
+              </section>
+            )}
+
             <div className="input-row">
               <span>메시지 입력</span>
               <button type="button" aria-label="전송">↗</button>
@@ -323,8 +442,8 @@ export default function App() {
                   </span>
                 </div>
                 <div className="popup-copy">
-                  <strong>{scenario.popupTitle}</strong>
-                  <p>{scenario.popupBody}</p>
+                  <strong>{copyPopupTitle}</strong>
+                  <p>{copyPopupBody}</p>
                   <div className="popup-actions">
                     <button id="acceptButton" type="button" onClick={handleAccept}>{scenario.acceptLabel}</button>
                     <button id="dismissButton" type="button" onClick={handleDismiss}>{scenario.dismissLabel}</button>
@@ -359,6 +478,30 @@ export default function App() {
             <strong>{scenario.acceptRate}%</strong>
             <em>{character.range}</em>
           </div>
+
+          {activeKey === "copy" && (
+            <div className={`detection-panel ${copyTriggerReady ? "ready" : ""}`}>
+              <span>실시간 감지 상태</span>
+              <dl>
+                <div>
+                  <dt>세션 시간</dt>
+                  <dd>{sessionMinutes}분 / {SESSION_MINUTES_THRESHOLD}분</dd>
+                </div>
+                <div>
+                  <dt>복붙 누적</dt>
+                  <dd>{scenario.copyCount}회 / {COPY_NUDGE_THRESHOLD}회</dd>
+                </div>
+                <div>
+                  <dt>최근 이벤트</dt>
+                  <dd>{lastCopySource}</dd>
+                </div>
+                <div>
+                  <dt>감지 시각</dt>
+                  <dd>{detectedAt || "없음"}</dd>
+                </div>
+              </dl>
+            </div>
+          )}
 
           <StageScale activeStage={stage} />
 
