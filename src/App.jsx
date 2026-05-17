@@ -152,6 +152,14 @@ function StageScale({ activeStage }) {
 function ReportPanel() {
   return (
     <section className="report-panel visible" aria-label="성장 리포트">
+      <ReportReceipt />
+    </section>
+  );
+}
+
+function ReportReceipt() {
+  return (
+    <div className="report-receipt">
       <h3>오늘 AI 활용 리포트</h3>
       <dl>
         <div>
@@ -164,19 +172,24 @@ function ReportPanel() {
         </div>
         <div>
           <dt>복붙 시도</dt>
-          <dd>6회 → 수정 4회</dd>
+          <dd>6회 <span aria-hidden="true">→</span> 수정 4회</dd>
         </div>
         <div>
           <dt>출처 확인</dt>
           <dd>1회</dd>
         </div>
       </dl>
-      <div className="score-box">
-        <span>리터러시 점수</span>
-        <strong>+24점</strong>
-        <em>Lv.2 비판적 탐색자</em>
-      </div>
-    </section>
+      <dl className="report-score">
+        <div>
+          <dt>리터러시 점수</dt>
+          <dd>+24점</dd>
+        </div>
+        <div>
+          <dt>현재 레벨</dt>
+          <dd>Lv.2 비판적 탐색자</dd>
+        </div>
+      </dl>
+    </div>
   );
 }
 
@@ -295,20 +308,30 @@ export default function App() {
             </div>
           </div>
 
-          <div className={`nudge-popup ${popupVisible ? "visible" : ""}`} role="dialog" aria-live="polite">
-            <div className={`popup-pet pet-stage-${stage}`} aria-hidden="true">
-              <span className="pet-figure">
-                <img src={character.image} alt="" />
-              </span>
-            </div>
-            <div className="popup-copy">
-              <strong>{scenario.popupTitle}</strong>
-              <p>{scenario.popupBody}</p>
-              <div className="popup-actions">
-                <button id="acceptButton" type="button" onClick={handleAccept}>{scenario.acceptLabel}</button>
-                <button id="dismissButton" type="button" onClick={handleDismiss}>{scenario.dismissLabel}</button>
-              </div>
-            </div>
+          <div
+            className={`nudge-popup ${activeKey === "report" ? "report-popup" : ""} ${popupVisible ? "visible" : ""}`}
+            role="dialog"
+            aria-live="polite"
+          >
+            {activeKey === "report" ? (
+              <ReportReceipt />
+            ) : (
+              <>
+                <div className={`popup-pet pet-stage-${stage}`} aria-hidden="true">
+                  <span className="pet-figure">
+                    <img src={character.image} alt="" />
+                  </span>
+                </div>
+                <div className="popup-copy">
+                  <strong>{scenario.popupTitle}</strong>
+                  <p>{scenario.popupBody}</p>
+                  <div className="popup-actions">
+                    <button id="acceptButton" type="button" onClick={handleAccept}>{scenario.acceptLabel}</button>
+                    <button id="dismissButton" type="button" onClick={handleDismiss}>{scenario.dismissLabel}</button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <Pet stage={stage} onClick={() => setPopupVisible(true)} />
