@@ -1,4 +1,42 @@
 import React, { useMemo, useState } from "react";
+import stage1Joy from "./assets/characters/clean/stage-1-joy.png";
+import stage2Happy from "./assets/characters/clean/stage-2-happy.png";
+import stage3Default from "./assets/characters/clean/stage-3-default.png";
+import stage4Angry from "./assets/characters/clean/stage-4-angry.png";
+import stage5Sad from "./assets/characters/clean/stage-5-sad.png";
+
+const characterStages = {
+  1: {
+    image: stage1Joy,
+    label: "극단 긍정 감정",
+    detail: "부가 장식 추가",
+    range: "90% 초과",
+  },
+  2: {
+    image: stage2Happy,
+    label: "활짝 웃는 표정",
+    detail: "요청을 잘 수용하는 상태",
+    range: "70% 초과~90% 이하",
+  },
+  3: {
+    image: stage3Default,
+    label: "디폴트(은은한 미소)",
+    detail: "중립적인 기본 상태",
+    range: "40% 초과~70% 이하",
+  },
+  4: {
+    image: stage4Angry,
+    label: "찡그리고 화난 표정",
+    detail: "무시가 늘어난 경고 상태",
+    range: "20% 초과~40% 이하",
+  },
+  5: {
+    image: stage5Sad,
+    label: "극단 슬픔 표정",
+    detail: "부가 장식 추가",
+    range: "20% 이하",
+  },
+};
 
 const initialScenarios = {
   copy: {
@@ -69,11 +107,11 @@ const initialScenarios = {
 const scenarioOrder = ["copy", "summary", "report"];
 
 function getMoodStage(rate) {
-  if (rate > 90) return [1, "극단 긍정"];
-  if (rate > 70) return [2, "활짝 웃는 표정"];
-  if (rate > 40) return [3, "은은한 미소"];
-  if (rate > 20) return [4, "찡그린 표정"];
-  return [5, "극단 슬픔"];
+  if (rate > 90) return 1;
+  if (rate > 70) return 2;
+  if (rate > 40) return 3;
+  if (rate > 20) return 4;
+  return 5;
 }
 
 function CopyTrail({ count }) {
@@ -87,15 +125,27 @@ function CopyTrail({ count }) {
 }
 
 function Pet({ stage, onClick }) {
+  const character = characterStages[stage];
+
   return (
     <button className={`pet pet-stage-${stage}`} type="button" aria-label="Hmm 캐릭터" onClick={onClick}>
-      <span className="pet-face">
-        <span className="eye left-eye" />
-        <span className="eye right-eye" />
-        <span className="mouth" />
+      <span className="pet-figure">
+        <img src={character.image} alt={`Hmm ${stage}단계 ${character.label}`} />
       </span>
-      <span className="pet-name">Hmm</span>
     </button>
+  );
+}
+
+function StageScale({ activeStage }) {
+  return (
+    <div className="stage-scale" aria-label="캐릭터 상태 단계 기준">
+      {Object.entries(characterStages).map(([stage, item]) => (
+        <div className={`stage-row ${Number(stage) === activeStage ? "active" : ""}`} key={stage}>
+          <span>{stage}단계</span>
+          <strong>{item.label}</strong>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -135,7 +185,8 @@ export default function App() {
   const [activeKey, setActiveKey] = useState("copy");
   const [popupVisible, setPopupVisible] = useState(false);
   const scenario = scenarios[activeKey];
-  const [stage, moodLabel] = useMemo(() => getMoodStage(scenario.acceptRate), [scenario.acceptRate]);
+  const stage = useMemo(() => getMoodStage(scenario.acceptRate), [scenario.acceptRate]);
+  const character = characterStages[stage];
 
   const updateActiveScenario = (updater) => {
     setScenarios((current) => ({
@@ -245,8 +296,10 @@ export default function App() {
           </div>
 
           <div className={`nudge-popup ${popupVisible ? "visible" : ""}`} role="dialog" aria-live="polite">
-            <div className="popup-pet" aria-hidden="true">
-              <span className="pet-face-mini" />
+            <div className={`popup-pet pet-stage-${stage}`} aria-hidden="true">
+              <span className="pet-figure">
+                <img src={character.image} alt="" />
+              </span>
             </div>
             <div className="popup-copy">
               <strong>{scenario.popupTitle}</strong>
@@ -269,13 +322,22 @@ export default function App() {
 
           <div className="pet-meter">
             <div>
-              <span>{stage}단계 · {moodLabel}</span>
-              <strong>수락률 {scenario.acceptRate}%</strong>
+              <span>현재 캐릭터 상태</span>
+              <strong>{stage}단계 · {character.label}</strong>
+              <em>{character.detail}</em>
             </div>
             <div className="meter-track">
               <span style={{ width: `${scenario.acceptRate}%` }} />
             </div>
           </div>
+
+          <div className="rate-note">
+            <span>요청 수용 횟수 / 전체 요청 횟수</span>
+            <strong>{scenario.acceptRate}%</strong>
+            <em>{character.range}</em>
+          </div>
+
+          <StageScale activeStage={stage} />
 
           <div className="guide-list">
             {scenario.guides.map(([label, text]) => (
