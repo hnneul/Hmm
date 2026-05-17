@@ -466,6 +466,8 @@ h1, h2, h3, p { margin-top: 0; }
 }
 
 .pet-figure img {
+  position: relative;
+  z-index: 1;
   filter: drop-shadow(0 6px 10px rgba(21, 21, 21, 0.18));
 }
 
@@ -508,6 +510,29 @@ h1, h2, h3, p { margin-top: 0; }
 
 .pet-stage-5 {
   opacity: 0.88;
+}
+
+.pet-stage-5 .pet-figure::before,
+.pet-stage-5 .pet-figure::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  width: 7px;
+  height: 11px;
+  background: #5ba4f5;
+  border: 1.5px solid var(--ink);
+  border-radius: 50% 50% 60% 60% / 40% 40% 60% 60%;
+}
+
+.pet-stage-5 .pet-figure::before {
+  left: 14px;
+  top: 38px;
+}
+
+.pet-stage-5 .pet-figure::after {
+  right: 14px;
+  top: 44px;
 }
 
 .side-panel {
